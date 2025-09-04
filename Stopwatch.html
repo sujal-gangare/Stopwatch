@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stopwatch</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+  </style>
+</head>
+<body class="p-4 sm:p-6">
+  <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full text-center flex flex-col items-center">
+    <h1 class="text-4xl sm:text-5xl font-bold text-gray-800 mb-8 mt-4">Stopwatch</h1>
+
+    <!-- Stopwatch Display -->
+    <div class="text-6xl sm:text-7xl font-mono mb-8 text-gray-900 bg-gray-100 p-4 rounded-xl w-full select-none">
+      <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>.<span id="milliseconds">00</span>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="flex flex-wrap justify-center gap-4 mb-8 w-full">
+      <button id="startBtn" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-xl min-w-[120px]">Start</button>
+      <button id="pauseBtn" class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold py-3 px-6 rounded-xl min-w-[120px]" disabled>Pause</button>
+      <button id="resetBtn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-xl min-w-[120px]" disabled>Reset</button>
+      <button id="lapBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl min-w-[120px]" disabled>Lap</button>
+    </div>
+
+    <!-- Lap Times Display -->
+    <div class="bg-gray-50 p-6 rounded-2xl w-full max-h-64 overflow-y-auto shadow-inner">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4">Laps</h2>
+      <ul id="lapList" class="text-gray-600 text-lg space-y-1">
+        <li id="noLapsMessage" class="text-gray-400">No laps recorded yet.</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const hoursDisplay = document.getElementById('hours');
+    const minutesDisplay = document.getElementById('minutes');
+    const secondsDisplay = document.getElementById('seconds');
+    const millisecondsDisplay = document.getElementById('milliseconds');
+    const lapList = document.getElementById('lapList');
+    const noLapsMessage = document.getElementById('noLapsMessage');
+
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const lapBtn = document.getElementById('lapBtn');
+
+    let startTime;
+    let elapsedTime = 0;
+    let timerInterval;
+    let isRunning = false;
+    let lapCount = 0;
+
+    function formatTimePart(num) {
+      return num < 10 ? '0' + num : num.toString();
+    }
+
+    function updateTimeDisplay() {
+      const ms = Math.floor((elapsedTime % 1000) / 10);
+      const sec = Math.floor((elapsedTime / 1000) % 60);
+      const min = Math.floor((elapsedTime / (1000 * 60)) % 60);
+      const hr = Math.floor(elapsedTime / (1000 * 60 * 60));
+
+      millisecondsDisplay.textContent = formatTimePart(ms);
+      secondsDisplay.textContent = formatTimePart(sec);
+      minutesDisplay.textContent = formatTimePart(min);
+      hoursDisplay.textContent = formatTimePart(hr);
+    }
+
+    function startStopwatch() {
+      if (isRunning) return;
+      isRunning = true;
+      startTime = Date.now() - elapsedTime;
+
+      timerInterval = setInterval(() => {
+        elapsedTime = Date.now() - startTime;
+        updateTimeDisplay();
+      }, 10);
+
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      resetBtn.disabled = false;
+      lapBtn.disabled = false;
+    }
+
+    function pauseStopwatch() {
+      if (!isRunning) return;
+      isRunning = false;
+      clearInterval(timerInterval);
+
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      lapBtn.disabled = true;
+    }
+
+    function resetStopwatch() {
+      pauseStopwatch();
+      elapsedTime = 0;
+      lapCount = 0;
+      updateTimeDisplay();
+
+      lapList.innerHTML = '<li id="noLapsMessage" class="text-gray-400">No laps recorded yet.</li>';
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      resetBtn.disabled = true;
+      lapBtn.disabled = true;
+    }
+
+    function recordLap() {
+      if (!isRunning) return;
+
+      lapCount++;
+      const lapTime = document.createElement('li');
+      lapTime.className = 'py-1 px-2 border-b border-gray-200 last:border-b-0 flex justify-between items-center';
+      lapTime.innerHTML = `
+        <span class="font-medium text-gray-700">Lap ${lapCount}:</span>
+        <span class="font-mono text-gray-800">${hoursDisplay.textContent}:${minutesDisplay.textContent}:${secondsDisplay.textContent}.${millisecondsDisplay.textContent}</span>
+      `;
+
+      if (noLapsMessage) noLapsMessage.style.display = 'none';
+      lapList.prepend(lapTime);
+    }
+
+    startBtn.addEventListener('click', startStopwatch);
+    pauseBtn.addEventListener('click', pauseStopwatch);
+    resetBtn.addEventListener('click', resetStopwatch);
+    lapBtn.addEventListener('click', recordLap);
+
+    window.onload = function () {
+      updateTimeDisplay();
+    };
+  </script>
+</body>
+</html>
